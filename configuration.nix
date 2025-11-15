@@ -10,6 +10,15 @@ let
   };
 
   ghostc = pkgs.callPackage ./ghostc.nix {};
+  markdownlint = pkgs.stdenv.mkDerivation {
+    name = "markdownlint-1.0";
+    unpackPhase = "true";
+    buildInputs = [ pkgs.markdownlint-cli2 ];
+    installPhase = ''
+      mkdir -p $out/bin
+      ln -s ${pkgs.markdownlint-cli2}/bin/markdownlint-cli2 $out/bin/markdownlint
+    '';
+  };
 in
 {
   imports =
@@ -74,7 +83,7 @@ in
   users.users.slowking = {
     isNormalUser = true;
     description = "slowking";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" ];
     packages = with pkgs; [
       kdePackages.kate
     ];
@@ -107,6 +116,10 @@ in
     # Docker
     docker
 
+    # Linter
+    markdownlint
+    markdownlint-cli2
+
     # Formatters
     prettierd
 
@@ -115,6 +128,7 @@ in
     ripgrep
     wget
     spotify
+    discord
     neovim
     git
     gh
@@ -124,8 +138,10 @@ in
     tree
 
     # C / C++
+    valgrind
     gcc
     clang
+    clang-tools
     gnumake
     cmake
     ninja
@@ -138,9 +154,6 @@ in
     cargo
     rustfmt
     clippy
-
-    #PHP
-    php
 
     # Go
     go
@@ -172,6 +185,24 @@ in
 
     # handy helper to prefetch git repos (requested)
     pkgs.nix-prefetch-git
+
+    #CyberSec
+    ghidra
+    gobuster
+    nmap
+    nikto
+    burpsuite
+    sqlmap
+    hashcat
+
+    #ntfs support for USB
+    ntfs3g
+
+    #DB and cache
+    postgresql
+    redis
+    valkey
+
   ];
 
   system.stateVersion = "25.05";
@@ -206,5 +237,12 @@ in
   };
 
   programs.steam.enable = true;
+  services.devmon.enable = true;
+  services.gvfs.enable = true;
+  services.udisks2.enable = true;
+  boot.supportedFilesystems = [ "ntfs" ];
+  virtualisation.docker = {
+    enable = true;
+  };
 }
 

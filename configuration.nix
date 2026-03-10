@@ -9,7 +9,10 @@ let
     sha256 = "sha256-7kvLfD6Nz4cEMrmCA9yq4enyqVyqiTkVZV5y4RyUatU=";
   };
 
+  unstable = import <nixpkgs-unstable> { };
+
   ghostc = pkgs.callPackage ./ghostc.nix {};
+
   markdownlint = pkgs.stdenv.mkDerivation {
     name = "markdownlint-1.0";
     unpackPhase = "true";
@@ -104,7 +107,7 @@ in
 
   environment.systemPackages = with pkgs; [
     # LSPs
-    rust-analyzer
+    unstable.rust-analyzer
     nil
     stylua
     gopls
@@ -114,7 +117,7 @@ in
     lua-language-server
 
     # Docker
-    docker
+    unstable.docker
 
     # Linter
     markdownlint
@@ -140,27 +143,44 @@ in
     # C / C++
     valgrind
     gcc
+    emscripten
     clang
     clang-tools
     gnumake
     cmake
+    bear
     ninja
     gdb
     (pkgs."pkg-config")
     openssl
+    sdl3
+    zlib
 
     # Rust toolchain
     rustc
+    rustup
     cargo
     rustfmt
     clippy
 
     # Go
     go
+    protoc-gen-go
+    protoc-gen-go-grpc
+    go-swag
+
+    # GRPC
+    grpc-tools
 
     # Nodejs
     nodejs
-    bun
+    unstable.bun
+
+    # Python
+    python3
+
+    # Java
+    jdk21 
 
     # Browser
     qutebrowser
@@ -200,12 +220,23 @@ in
 
     #DB and cache
     postgresql
+    pgadmin
     redis
     valkey
 
+    #MISC
+    zip
+    unzip
+    ant
+    age
+    sops
+    awscli2
+    anydesk
   ];
 
   system.stateVersion = "25.05";
+
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   hardware.graphics = { enable = true; };
 
@@ -241,8 +272,29 @@ in
   services.gvfs.enable = true;
   services.udisks2.enable = true;
   boot.supportedFilesystems = [ "ntfs" ];
+
+  # Disable libvirt / KVM
+  virtualisation.libvirtd.enable = false;
+
+  # Prevent KVM kernel modules from loading
+  boot.blacklistedKernelModules = [ "kvm" "kvm-amd" ];
+
   virtualisation.docker = {
     enable = true;
+  };
+
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = [ "slowking" ];
+
+  # temporary
+  networking.hosts = {
+    "192.168.1.60" = [
+      "grafana.test-vm"
+      "prometheus.test-vm"
+      "loki.test-vm"
+      "garage.test-vm"
+      "backend.test-vm"
+    ];
   };
 }
 

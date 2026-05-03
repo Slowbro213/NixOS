@@ -9,7 +9,11 @@ let
     sha256 = "sha256-7kvLfD6Nz4cEMrmCA9yq4enyqVyqiTkVZV5y4RyUatU=";
   };
 
-  unstable = import <nixpkgs-unstable> { };
+  unstable = import <nixpkgs-unstable> {
+    config.allowUnfree = true;
+    config.android_sdk.accept_license = true;
+
+  };
 
   ghostc = pkgs.callPackage ./ghostc.nix {};
 
@@ -49,7 +53,6 @@ in
 
   networking.networkmanager.enable = true;
   time.timeZone = "Europe/Tirane";
-
   i18n.defaultLocale = "en_US.UTF-8";
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "sq_AL.UTF-8";
@@ -119,6 +122,18 @@ in
     # Docker
     unstable.docker
 
+    # Kubernetes
+    (wrapHelm kubernetes-helm {
+      plugins = with pkgs.kubernetes-helmPlugins; [
+        helm-secrets
+        helm-diff
+        helm-s3
+        helm-git
+      ];
+    })
+    kubectl
+    minikube
+
     # Linter
     markdownlint
     markdownlint-cli2
@@ -132,6 +147,7 @@ in
     wget
     spotify
     discord
+    obsidian
     neovim
     git
     gh
@@ -151,10 +167,9 @@ in
     bear
     ninja
     gdb
-    (pkgs."pkg-config")
+    pkg-config
     openssl
     sdl3
-    zlib
 
     # Rust toolchain
     rustc
@@ -182,9 +197,6 @@ in
     # Java
     jdk21 
 
-    # Browser
-    qutebrowser
-
     # Clipboard Provider
     xclip
 
@@ -198,12 +210,12 @@ in
     # Ghostty (if available)
     pkgs.ghostty
 
-    # Ghostc (built from your GitHub repo)
+    # Terminal pretty
     ghostc
     cmatrix
     btop
 
-    # handy helper to prefetch git repos (requested)
+    # handy helper to prefetch git repos
     pkgs.nix-prefetch-git
 
     #CyberSec
@@ -220,9 +232,15 @@ in
 
     #DB and cache
     postgresql
-    pgadmin
+    pgadmin4
     redis
     valkey
+
+    #gamedev
+    unityhub
+
+    #mobile-dev
+    unstable.android-studio
 
     #MISC
     zip
@@ -232,6 +250,8 @@ in
     sops
     awscli2
     anydesk
+    unixODBC
+    gpu-screen-recorder-gtk
   ];
 
   system.stateVersion = "25.05";
@@ -249,6 +269,8 @@ in
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.latest;
   };
+
+  programs.gpu-screen-recorder.enable = true;
 
   users.defaultUserShell = pkgs.zsh;
   environment.shells = with pkgs; [ zsh ];
@@ -273,8 +295,8 @@ in
   services.udisks2.enable = true;
   boot.supportedFilesystems = [ "ntfs" ];
 
-  # Disable libvirt / KVM
-  virtualisation.libvirtd.enable = false;
+  virtualisation.libvirtd.enable = true;
+  programs.virt-manager.enable = true;
 
   # Prevent KVM kernel modules from loading
   boot.blacklistedKernelModules = [ "kvm" "kvm-amd" ];
@@ -288,12 +310,14 @@ in
 
   # temporary
   networking.hosts = {
-    "192.168.1.60" = [
-      "grafana.test-vm"
-      "prometheus.test-vm"
-      "loki.test-vm"
-      "garage.test-vm"
-      "backend.test-vm"
+    "192.168.1.25" = [
+      "gentoo.lan"
+      "grafana.gentoo.lan"
+      "argocd.gentoo.lan"
+      "whoami.gentoo.lan"
+    ];
+    "127.0.0.1" = [
+      "shfa.globaleaks.local"
     ];
   };
 }
